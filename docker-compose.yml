@@ -1,0 +1,53 @@
+version: "3.8"
+
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=${N8N_HOST:-localhost}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=${N8N_PROTOCOL:-http}
+      - N8N_EDITOR_BASE_URL=${N8N_PROTOCOL:-http}://${N8N_HOST:-localhost}:5678
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:-your-secret-key}
+      - N8N_EMAIL_MODE=smtp
+      - N8N_SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
+      - N8N_SMTP_PORT=${SMTP_PORT:-587}
+      - N8N_SMTP_USER=${SMTP_USER:-your-email@gmail.com}
+      - N8N_SMTP_PASS=${SMTP_PASS:-your-app-password}
+      - NODE_ENV=production
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - n8n-network
+
+  n8n-postgres:
+    image: postgres:15
+    container_name: n8n-postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-n8n}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-n8n}
+      - POSTGRES_DB=${POSTGRES_DB:-n8n}
+    volumes:
+      - n8n_postgres:/var/lib/postgresql/data
+    networks:
+      - n8n-network
+
+volumes:
+  n8n_data:
+    driver_opts:
+      type: nfs
+      device: ":/Docker/n8n/data"
+      o: nfsvers=4,addr=192.168.0.134,nolock,soft,rw
+  n8n_postgres:
+    driver_opts:
+      type: nfs
+      device: ":/Docker/n8n/postgres"
+      o: nfsvers=4,addr=192.168.0.134,nolock,soft,rw
+
+networks:
+  n8n-network:
